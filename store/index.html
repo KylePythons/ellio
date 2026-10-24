@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>BestBye — Electronics</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,560;9..144,680&family=Outfit:wght@400;500;600&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <header class="top">
+      <div class="brand">
+        <span class="mark" aria-hidden="true">B</span>
+        <div>
+          <p class="name">BestBye</p>
+          <p class="tag">Electronics, plainly priced</p>
+        </div>
+      </div>
+      <p class="city">Ships from a warehouse in New Mexico</p>
+    </header>
+
+    <main>
+      <section class="intro">
+        <h1>Things for the living room, the desk, and the commute.</h1>
+        <p>Pick an item, then check out. The card number stays in this browser.</p>
+      </section>
+
+      <div class="layout">
+        <section class="grid" id="products" aria-label="Products">
+          <button type="button" class="product is-selected" data-item="65&quot; Horizon TV" data-amount="1499">
+            <span class="swatch swatch-tv" aria-hidden="true"></span>
+            <span class="product-copy">
+              <span class="eyebrow">Featured</span>
+              <span class="product-name">65" Horizon TV</span>
+              <span class="product-blurb">A wide 4K panel with a stand that stays put.</span>
+              <span class="price">$1,499</span>
+            </span>
+          </button>
+          <button type="button" class="product" data-item="Cedar Headphones" data-amount="189">
+            <span class="swatch swatch-audio" aria-hidden="true"></span>
+            <span class="product-copy">
+              <span class="eyebrow">Audio</span>
+              <span class="product-name">Cedar Headphones</span>
+              <span class="product-blurb">Over-ear, wired, no companion app.</span>
+              <span class="price">$189</span>
+            </span>
+          </button>
+          <button type="button" class="product" data-item="Field Notebook Laptop" data-amount="899">
+            <span class="swatch swatch-laptop" aria-hidden="true"></span>
+            <span class="product-copy">
+              <span class="eyebrow">Computers</span>
+              <span class="product-name">Field Notebook Laptop</span>
+              <span class="product-blurb">14 inches, a day of battery, two ports.</span>
+              <span class="price">$899</span>
+            </span>
+          </button>
+          <button type="button" class="product" data-item="Porch Speaker" data-amount="129">
+            <span class="swatch swatch-speaker" aria-hidden="true"></span>
+            <span class="product-copy">
+              <span class="eyebrow">Audio</span>
+              <span class="product-name">Porch Speaker</span>
+              <span class="product-blurb">One driver, a cloth grille, a volume knob.</span>
+              <span class="price">$129</span>
+            </span>
+          </button>
+          <button type="button" class="product" data-item="Pocket Earbuds" data-amount="79">
+            <span class="swatch swatch-buds" aria-hidden="true"></span>
+            <span class="product-copy">
+              <span class="eyebrow">Audio</span>
+              <span class="product-name">Pocket Earbuds</span>
+              <span class="product-blurb">A small case and a cable in the box.</span>
+              <span class="price">$79</span>
+            </span>
+          </button>
+          <button type="button" class="product" data-item="Kitchen Tablet" data-amount="429">
+            <span class="swatch swatch-tablet" aria-hidden="true"></span>
+            <span class="product-copy">
+              <span class="eyebrow">Tablets</span>
+              <span class="product-name">Kitchen Tablet</span>
+              <span class="product-blurb">A propped screen for recipes and calls.</span>
+              <span class="price">$429</span>
+            </span>
+          </button>
+        </section>
+
+        <form class="checkout" id="checkout">
+          <h2>Checkout</h2>
+          <p class="chosen" id="chosen">65" Horizon TV · $1,499</p>
+          <label>
+            Name
+            <input name="customer" autocomplete="name" value="Dolores" required />
+          </label>
+          <label>
+            Card
+            <input
+              name="card"
+              inputmode="numeric"
+              autocomplete="off"
+              value="4242 4242 4242 4242"
+              required
+            />
+          </label>
+          <label>
+            Shipping city
+            <input name="location" value="San Francisco, CA" required />
+          </label>
+          <p class="hint">Card on file is registered in Hobbs, NM.</p>
+          <button type="submit" id="submit">Place order</button>
+          <p class="result" id="result" role="status"></p>
+        </form>
+      </div>
+    </main>
+
+    <script src="./config.js"></script>
+    <script src="./app.js"></script>
+  </body>
+</html>
