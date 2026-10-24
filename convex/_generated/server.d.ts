@@ -30,6 +30,11 @@ import type { DataModel } from "./dataModel.js";
 type Env = {
   readonly CONVEX_CLOUD_URL: string;
   readonly CONVEX_SITE_URL: string;
+  readonly AGENT_ID: string | undefined;
+  readonly CARTESIA_API_KEY: string | undefined;
+  readonly FROM_NUMBER_ID: string | undefined;
+  readonly GRANDMA_PHONE: string | undefined;
+  readonly WEBHOOK_SECRET: string | undefined;
 };
 
 /**
