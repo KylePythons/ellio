@@ -3,7 +3,8 @@ import { httpAction } from "./_generated/server";
 import { env } from "./_generated/server";
 import { internal } from "./_generated/api";
 import type { Id } from "./_generated/dataModel";
-import { CALL_THRESHOLD, scorePurchase } from "./risk";
+import { CALL_THRESHOLD, categoryOf, scorePurchase } from "./risk";
+import { historyFor } from "./nessie";
 import { crsReason, fraudFinder } from "./crs";
 
 // The desk starts the call when Ellio reaches the "Call" step (calls.startNow).
@@ -132,10 +133,22 @@ const purchase = httpAction(async (ctx, req) => {
     if (r) extra.push(r);
   }
 
+  const isDolores = customer.trim().split(/\s+/)[0].toLowerCase() === "dolores";
+  let history: Awaited<ReturnType<typeof historyFor>> = null;
+  if (isDolores) {
+    try {
+      history = await historyFor(ctx);
+      if (history) console.log(`nessie.history ${history.count} purchases, median $${history.typicalAmount}, categories ${history.categories.join(", ")}`);
+    } catch (error) {
+      console.warn(`nessie.history skipped: ${errorText(error)}`);
+    }
+  }
+
   const recent = await ctx.runQuery(internal.transactions.recentFor, { customer });
   const { score, reasons } = scorePurchase({
     extra,
     contactName,
+    ...(history ? { history } : {}),
     customer,
     item,
     amount,
@@ -153,6 +166,13 @@ const purchase = httpAction(async (ctx, req) => {
   });
   console.log(`risk.score ${score}/100 for ${item} $${amount} → ${score >= CALL_THRESHOLD ? "call" : "no call"} | ${reasons.join("; ")}`);
   if (score < CALL_THRESHOLD) {
+    if (isDolores && history) {
+      await ctx.scheduler.runAfter(0, internal.nessie.recordPurchase, {
+        amount,
+        category: categoryOf(item),
+        description: `${merchant} ${item}`,
+      });
+    }
     return json({
       ok: true,
       risky: false,

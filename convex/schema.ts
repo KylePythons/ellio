@@ -36,6 +36,11 @@ export default defineSchema({
     runUntil: v.number(),
     scored: v.number(),
   }),
+  nessie: defineTable({
+    customerId: v.string(),
+    accountId: v.string(),
+    merchants: v.record(v.string(), v.string()),
+  }),
   cases: defineTable({
     transactionId: v.id("transactions"),
     status: caseStatus,

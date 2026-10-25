@@ -10,6 +10,7 @@ const app = defineApp({
     WEBHOOK_SECRET: v.optional(v.string()),
     CRS_USERNAME: v.optional(v.string()),
     CRS_PASSWORD: v.optional(v.string()),
+    NESSIE_API_KEY: v.optional(v.string()),
   },
 });
 

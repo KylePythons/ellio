@@ -37,7 +37,7 @@ export const CALL_THRESHOLD = 60;
 
 const SCAM_PAYMENTS = /gift\s*card|wire|western union|money\s*order|crypto|bitcoin/i;
 
-function categoryOf(item: string): string {
+export function categoryOf(item: string): string {
   const s = item.toLowerCase();
   if (/gift\s*card/.test(s)) return "gift cards";
   if (/tv|laptop|tablet|headphone|earbud|speaker|phone|camera/.test(s)) return "electronics";
@@ -59,19 +59,26 @@ export function scorePurchase(args: {
   recent: RecentPurchase[]; // her other purchases, newest first
   now: number;
   contactName?: string; // name on the receipt contact, if given
+  history?: { count: number; typicalAmount: number; categories: string[] }; // from Capital One Nessie
   extra?: Array<[number, string]>; // outside signals, e.g. CRS FraudFinder
 }): { score: number; reasons: string[] } {
   const key = args.customer.trim().split(/\s+/)[0].toLowerCase();
-  const p = PROFILES[key] ?? DEFAULT_PROFILE;
+  const base = PROFILES[key] ?? DEFAULT_PROFILE;
+  const h = args.history;
+  const p: Profile = h
+    ? { ...base, typicalAmount: h.typicalAmount, categories: h.categories.length ? h.categories : base.categories }
+    : base;
+  const src = h ? ` (Nessie: median $${h.typicalAmount.toFixed(2)} over ${h.count} purchases)` : "";
+  const catSrc = h ? ` in ${h.count} Nessie purchases` : " on record";
   const parts: Array<[number, string]> = [];
 
   const ratio = args.amount / p.typicalAmount;
-  if (ratio >= 10) parts.push([30, `${Math.round(ratio)}× her usual purchase`]);
-  else if (ratio >= 5) parts.push([20, `${Math.round(ratio)}× her usual purchase`]);
-  else if (ratio >= 2) parts.push([10, `About ${Math.round(ratio)}× her usual purchase`]);
+  if (ratio >= 10) parts.push([30, `${Math.round(ratio)}× her usual purchase${src}`]);
+  else if (ratio >= 5) parts.push([20, `${Math.round(ratio)}× her usual purchase${src}`]);
+  else if (ratio >= 2) parts.push([10, `About ${Math.round(ratio)}× her usual purchase${src}`]);
 
   const category = categoryOf(args.item);
-  if (!p.categories.includes(category)) parts.push([15, `First ${category} purchase on record`]);
+  if (!p.categories.includes(category)) parts.push([15, `First ${category} purchase${catSrc}`]);
 
   if (SCAM_PAYMENTS.test(args.item)) parts.push([30, "Gift cards are a common scam payment"]);
 
