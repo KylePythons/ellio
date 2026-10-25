@@ -17,6 +17,7 @@ export const transcriptEntry = v.object({
 export const redFlag = v.object({
   flag: v.string(),
   quote: v.string(),
+  why: v.optional(v.string()),
   at: v.number(),
 });
 
@@ -28,15 +29,25 @@ export default defineSchema({
     amount: v.number(),
     location: v.string(),
     createdAt: v.number(),
+    riskScore: v.optional(v.number()),
+    sample: v.optional(v.boolean()),
+  }),
+  traffic: defineTable({
+    runUntil: v.number(),
+    scored: v.number(),
   }),
   cases: defineTable({
     transactionId: v.id("transactions"),
     status: caseStatus,
     riskReasons: v.array(v.string()),
+    riskScore: v.optional(v.number()),
     transcript: v.array(transcriptEntry),
     redFlags: v.array(redFlag),
     summary: v.union(v.string(), v.null()),
     actions: v.array(v.string()),
+    reason: v.optional(v.string()),
+    endedAt: v.optional(v.number()),
+    callPlacedAt: v.optional(v.number()),
     updatedAt: v.number(),
   }),
 });

@@ -3,9 +3,12 @@ import { httpAction } from "./_generated/server";
 import { env } from "./_generated/server";
 import { internal } from "./_generated/api";
 import type { Id } from "./_generated/dataModel";
+import { CALL_THRESHOLD, scorePurchase } from "./risk";
+import { crsReason, fraudFinder } from "./crs";
 
-const HOME_LOCATION = "Hobbs, NM";
-const AMOUNT_LIMIT = 500;
+// The desk starts the call when Ellio reaches the "Call" step (calls.startNow).
+// This is only a backstop in case no desk is open.
+const CALL_DELAY_MS = 45000;
 
 const CORS_HEADERS = {
   "Access-Control-Allow-Origin": "*",
@@ -82,86 +85,6 @@ function toolFailure(error: unknown): Response {
   return json({ error: "Could not update case" }, 500);
 }
 
-function riskReasons(amount: number, location: string): string[] {
-  const reasons: string[] = [];
-  if (amount > AMOUNT_LIMIT) {
-    reasons.push(`Amount $${amount} is over $${AMOUNT_LIMIT}`);
-  }
-  if (location !== HOME_LOCATION) {
-    reasons.push(`Location ${location} is not ${HOME_LOCATION}`);
-  }
-  return reasons;
-}
-
-async function placeCartesiaCall(args: {
-  caseId: Id<"cases">;
-  item: string;
-  amount: number;
-  merchant: string;
-  location: string;
-  riskReasons: string[];
-}): Promise<"skipped" | "placed" | "failed"> {
-  const apiKey = envValue(env.CARTESIA_API_KEY);
-  const fromNumberId = envValue(env.FROM_NUMBER_ID);
-  const agentId = envValue(env.AGENT_ID);
-  const grandmaPhone = envValue(env.GRANDMA_PHONE);
-  const missing = [
-    ["CARTESIA_API_KEY", apiKey],
-    ["FROM_NUMBER_ID", fromNumberId],
-    ["AGENT_ID", agentId],
-    ["GRANDMA_PHONE", grandmaPhone],
-  ]
-    .filter(([, value]) => !value)
-    .map(([name]) => name);
-
-  if (missing.length > 0 || !apiKey || !fromNumberId || !agentId || !grandmaPhone) {
-    console.warn(
-      `Cartesia env vars missing (${missing.join(", ")}). Case left in calling status.`,
-    );
-    return "skipped";
-  }
-
-  try {
-    const response = await fetch("https://api.cartesia.ai/agents/calls", {
-      method: "POST",
-      headers: {
-        "X-API-Key": apiKey,
-        "Cartesia-Version": "2026-03-01",
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        from_number_id: fromNumberId,
-        agent_id: agentId,
-        outbound_calls: [
-          {
-            to_number: grandmaPhone,
-            metadata: {
-              case_id: args.caseId,
-              customer_name: "Dolores",
-              item: args.item,
-              amount: args.amount,
-              merchant: args.merchant,
-              location: args.location,
-              risk_reasons: args.riskReasons,
-            },
-          },
-        ],
-      }),
-    });
-    if (!response.ok) {
-      console.warn(
-        `Cartesia call failed (${response.status}). Case left in calling status.`,
-      );
-      return "failed";
-    }
-    return "placed";
-  } catch (error) {
-    console.warn(
-      `Cartesia call failed (${errorText(error)}). Case left in calling status.`,
-    );
-    return "failed";
-  }
-}
 
 const purchase = httpAction(async (ctx, req) => {
   const body: unknown = await req.json().catch(() => undefined);
@@ -184,28 +107,68 @@ const purchase = httpAction(async (ctx, req) => {
     );
   }
 
+  const email = requiredString(body, "email");
+  const phone = requiredString(body, "phone") ?? undefined;
+  const contactRaw = isRecord(body.contact) ? body.contact.name : undefined;
+  const contactName = typeof contactRaw === "string" && contactRaw.trim() !== "" ? contactRaw.trim() : undefined;
+  const extra: Array<[number, string]> = [];
+  let crs: Awaited<ReturnType<typeof fraudFinder>> | null = null;
+  if (email) {
+    const c = isRecord(body.contact) ? body.contact : {};
+    const str = (k: string) => (typeof c[k] === "string" && (c[k] as string).trim() !== "" ? (c[k] as string).trim() : undefined);
+    crs = await fraudFinder({
+      name: str("name") ?? customer,
+      email,
+      phone,
+      ipAddress: str("ipAddress"),
+      address:
+        str("street") && str("city") && str("state") && str("zip")
+          ? { addressLine1: str("street")!, city: str("city")!, state: str("state")!, postalCode: str("zip")! }
+          : undefined,
+    });
+    if (crs.ok) console.log(`crs.fraudFinder score ${crs.score} | ${crs.signals.join("; ")}`);
+    else console.warn(`crs.fraudFinder skipped: ${crs.error}`);
+    const r = crsReason(crs);
+    if (r) extra.push(r);
+  }
+
+  const recent = await ctx.runQuery(internal.transactions.recentFor, { customer });
+  const { score, reasons } = scorePurchase({
+    extra,
+    contactName,
+    customer,
+    item,
+    amount,
+    location,
+    recent,
+    now: Date.now(),
+  });
   const transactionId = await ctx.runMutation(internal.transactions.record, {
     customer,
     merchant,
     item,
     amount,
     location,
+    riskScore: score,
   });
-  const reasons = riskReasons(amount, location);
-  if (reasons.length === 0) {
+  console.log(`risk.score ${score}/100 for ${item} $${amount} → ${score >= CALL_THRESHOLD ? "call" : "no call"} | ${reasons.join("; ")}`);
+  if (score < CALL_THRESHOLD) {
     return json({
       ok: true,
       risky: false,
       transactionId,
+      riskScore: score,
       riskReasons: reasons,
+      crsScore: crs?.score ?? null,
     });
   }
 
   const caseId = await ctx.runMutation(internal.cases.open, {
     transactionId,
     riskReasons: reasons,
+    riskScore: score,
   });
-  const cartesia = await placeCartesiaCall({
+  await ctx.scheduler.runAfter(CALL_DELAY_MS, internal.calls.place, {
     caseId,
     item,
     amount,
@@ -213,6 +176,8 @@ const purchase = httpAction(async (ctx, req) => {
     location,
     riskReasons: reasons,
   });
+  const cartesia = "scheduled";
+  console.log(`case ${caseId} opened · waiting for Ellio's review (backstop call in ${CALL_DELAY_MS / 1000}s)`);
 
   return json({
     ok: true,
@@ -220,7 +185,9 @@ const purchase = httpAction(async (ctx, req) => {
     transactionId,
     caseId,
     status: "calling",
+    riskScore: score,
     riskReasons: reasons,
+    crsScore: crs?.score ?? null,
     cartesia,
   });
 });
@@ -246,6 +213,7 @@ const escalate = httpAction(async (ctx, req) => {
   if (parsed instanceof Response) {
     return parsed;
   }
+  console.log(`claude → escalate: ${parsed.reason}`);
   try {
     const result = await ctx.runMutation(internal.cases.escalate, {
       caseId: parsed.case_id as Id<"cases">,
@@ -258,7 +226,8 @@ const escalate = httpAction(async (ctx, req) => {
 });
 
 const redFlag = httpAction(async (ctx, req) => {
-  const parsed = await readToolBody(req, ["case_id", "flag", "quote"]);
+  const parsed = await readToolBody(req, ["case_id", "flag", "quote"], ["why"]);
+  if (!(parsed instanceof Response)) console.log(`claude → report_red_flag "${parsed.flag}"`);
   if (parsed instanceof Response) {
     return parsed;
   }
@@ -267,6 +236,7 @@ const redFlag = httpAction(async (ctx, req) => {
       caseId: parsed.case_id as Id<"cases">,
       flag: parsed.flag,
       quote: parsed.quote,
+      ...(parsed.why ? { why: parsed.why } : {}),
     });
     return json({ ok: true, case_id: parsed.case_id, ...result });
   } catch (error) {
@@ -294,6 +264,7 @@ const transcript = httpAction(async (ctx, req) => {
 async function readToolBody(
   req: Request,
   keys: string[],
+  optional: string[] = [],
 ): Promise<Record<string, string> | Response> {
   const body: unknown = await req.json().catch(() => undefined);
   if (!isRecord(body)) {
@@ -306,6 +277,12 @@ async function readToolBody(
       return json({ error: `${keys.join(", ")} are required` }, 400);
     }
     parsed[key] = value;
+  }
+  for (const key of optional) {
+    const value = requiredString(body, key);
+    if (value) {
+      parsed[key] = value;
+    }
   }
   return parsed;
 }
@@ -334,6 +311,13 @@ const cartesiaWebhook = httpAction(async (ctx, req) => {
   const caseId = metadata.case_id.trim();
   if (caseId === "") {
     return json({ error: "call.metadata.case_id is missing" }, 400);
+  }
+  try {
+    await ctx.runMutation(internal.cases.markEnded, {
+      caseId: caseId as Id<"cases">,
+    });
+  } catch (error) {
+    return toolFailure(error);
   }
   if (typeof body.call.summary !== "string" || body.call.summary.trim() === "") {
     return json({ ok: true, saved: false });

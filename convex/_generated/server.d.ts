@@ -32,6 +32,8 @@ type Env = {
   readonly CONVEX_SITE_URL: string;
   readonly AGENT_ID: string | undefined;
   readonly CARTESIA_API_KEY: string | undefined;
+  readonly CRS_PASSWORD: string | undefined;
+  readonly CRS_USERNAME: string | undefined;
   readonly FROM_NUMBER_ID: string | undefined;
   readonly GRANDMA_PHONE: string | undefined;
   readonly WEBHOOK_SECRET: string | undefined;

@@ -3,118 +3,119 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>BestBye — Electronics</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <title>BestBye</title>
     <link
-      href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,560;9..144,680&family=Outfit:wght@400;500;600&display=swap"
-      rel="stylesheet"
+      rel="icon"
+      href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='4' fill='%23ffe000'/%3E%3Ccircle cx='9' cy='16' r='2.2' fill='%23131921'/%3E%3C/svg%3E"
     />
     <link rel="stylesheet" href="./styles.css" />
   </head>
   <body>
-    <header class="top">
-      <div class="brand">
-        <span class="mark" aria-hidden="true">B</span>
-        <div>
-          <p class="name">BestBye</p>
-          <p class="tag">Electronics, plainly priced</p>
+    <div class="promo-bar">Pickup available at the Hobbs warehouse · In-stock electronics ship today</div>
+
+    <header class="site-header">
+      <div class="wrap header-main">
+        <a class="logo-tag" href="#/">BestBye</a>
+
+        <div class="deliver-wrap">
+          <button type="button" id="deliver" aria-expanded="false" aria-controls="loc-pop">
+            <span class="deliver-kicker">Deliver to</span>
+            <span id="deliver-city">Hobbs, NM</span>
+          </button>
+          <form id="loc-pop" class="loc-pop" hidden>
+            <p class="loc-title">Choose your location</p>
+            <label>
+              Shipping city
+              <input id="loc-input" name="popover-location" autocomplete="address-level2" />
+            </label>
+            <button type="submit" class="btn btn-yellow btn-block" id="loc-save">Apply</button>
+          </form>
         </div>
+
+        <form class="search" id="search-form" role="search">
+          <label class="sr-only" for="search-input">Search BestBye</label>
+          <input id="search-input" type="search" placeholder="Search BestBye" autocomplete="off" />
+          <button type="submit" aria-label="Search">
+            <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true">
+              <circle cx="10.5" cy="10.5" r="6.5" fill="none" stroke="#111" stroke-width="2.4" />
+              <path d="M15.5 15.5 L20 20" stroke="#111" stroke-width="2.4" stroke-linecap="round" />
+            </svg>
+          </button>
+        </form>
+
+        <a class="account" href="#/orders">
+          <img class="account-photo" id="account-photo" src="../assets/dolores.jpg" alt="" width="36" height="36" />
+          <span>
+            <span class="account-small">Hello, <span id="hello-name">Dolores</span></span>
+            <span class="account-strong">Account &amp; Orders</span>
+          </span>
+        </a>
+
+        <a class="cart-link" href="#/cart" aria-label="Cart">
+          <span class="cart-icon-wrap">
+            <svg viewBox="0 0 40 32" width="42" height="34" aria-hidden="true">
+              <path
+                d="M2 4h5.2l1.2 4.2M10 12h24l-3.2 12.2a2 2 0 0 1-2 1.5H14.2a2 2 0 0 1-2-1.6L8.4 8.2"
+                fill="none"
+                stroke="#fff"
+                stroke-width="2"
+                stroke-linejoin="round"
+                stroke-linecap="round"
+              />
+              <circle cx="16" cy="28.5" r="2" fill="#fff" />
+              <circle cx="28" cy="28.5" r="2" fill="#fff" />
+            </svg>
+            <span id="cart-count" class="cart-badge">0</span>
+          </span>
+          <span class="cart-word">Cart</span>
+        </a>
       </div>
-      <p class="city">Ships from a warehouse in New Mexico</p>
+
+      <nav class="dept-nav" aria-label="Departments">
+        <div class="wrap dept-inner">
+          <a href="#/" data-nav="">All</a>
+          <a href="#/c/tvs" data-nav="tvs">TVs &amp; Home Theater</a>
+          <a href="#/c/audio" data-nav="audio">Audio</a>
+          <a href="#/c/computers" data-nav="computers">Computers</a>
+          <a href="#/c/tablets" data-nav="tablets">Tablets</a>
+          <a href="#/c/deals" data-nav="deals">Deals</a>
+        </div>
+      </nav>
     </header>
 
-    <main>
-      <section class="intro">
-        <h1>Things for the living room, the desk, and the commute.</h1>
-        <p>Pick an item, then check out. The card number stays in this browser.</p>
-      </section>
+    <div id="toast" class="toast" role="status" hidden></div>
 
-      <div class="layout">
-        <section class="grid" id="products" aria-label="Products">
-          <button type="button" class="product is-selected" data-item="65&quot; Horizon TV" data-amount="1499">
-            <span class="swatch swatch-tv" aria-hidden="true"></span>
-            <span class="product-copy">
-              <span class="eyebrow">Featured</span>
-              <span class="product-name">65" Horizon TV</span>
-              <span class="product-blurb">A wide 4K panel with a stand that stays put.</span>
-              <span class="price">$1,499</span>
-            </span>
-          </button>
-          <button type="button" class="product" data-item="Cedar Headphones" data-amount="189">
-            <span class="swatch swatch-audio" aria-hidden="true"></span>
-            <span class="product-copy">
-              <span class="eyebrow">Audio</span>
-              <span class="product-name">Cedar Headphones</span>
-              <span class="product-blurb">Over-ear, wired, no companion app.</span>
-              <span class="price">$189</span>
-            </span>
-          </button>
-          <button type="button" class="product" data-item="Field Notebook Laptop" data-amount="899">
-            <span class="swatch swatch-laptop" aria-hidden="true"></span>
-            <span class="product-copy">
-              <span class="eyebrow">Computers</span>
-              <span class="product-name">Field Notebook Laptop</span>
-              <span class="product-blurb">14 inches, a day of battery, two ports.</span>
-              <span class="price">$899</span>
-            </span>
-          </button>
-          <button type="button" class="product" data-item="Porch Speaker" data-amount="129">
-            <span class="swatch swatch-speaker" aria-hidden="true"></span>
-            <span class="product-copy">
-              <span class="eyebrow">Audio</span>
-              <span class="product-name">Porch Speaker</span>
-              <span class="product-blurb">One driver, a cloth grille, a volume knob.</span>
-              <span class="price">$129</span>
-            </span>
-          </button>
-          <button type="button" class="product" data-item="Pocket Earbuds" data-amount="79">
-            <span class="swatch swatch-buds" aria-hidden="true"></span>
-            <span class="product-copy">
-              <span class="eyebrow">Audio</span>
-              <span class="product-name">Pocket Earbuds</span>
-              <span class="product-blurb">A small case and a cable in the box.</span>
-              <span class="price">$79</span>
-            </span>
-          </button>
-          <button type="button" class="product" data-item="Kitchen Tablet" data-amount="429">
-            <span class="swatch swatch-tablet" aria-hidden="true"></span>
-            <span class="product-copy">
-              <span class="eyebrow">Tablets</span>
-              <span class="product-name">Kitchen Tablet</span>
-              <span class="product-blurb">A propped screen for recipes and calls.</span>
-              <span class="price">$429</span>
-            </span>
-          </button>
-        </section>
+    <main class="wrap" id="view"></main>
 
-        <form class="checkout" id="checkout">
-          <h2>Checkout</h2>
-          <p class="chosen" id="chosen">65" Horizon TV · $1,499</p>
-          <label>
-            Name
-            <input name="customer" autocomplete="name" value="Dolores" required />
-          </label>
-          <label>
-            Card
-            <input
-              name="card"
-              inputmode="numeric"
-              autocomplete="off"
-              value="4242 4242 4242 4242"
-              required
-            />
-          </label>
-          <label>
-            Shipping city
-            <input name="location" value="San Francisco, CA" required />
-          </label>
-          <p class="hint">Card on file is registered in Hobbs, NM.</p>
-          <button type="submit" id="submit">Place order</button>
-          <p class="result" id="result" role="status"></p>
-        </form>
+    <footer>
+      <button type="button" id="back-top">Back to top</button>
+      <div class="foot-main">
+        <div class="wrap foot-grid">
+          <div>
+            <h2>Shop</h2>
+            <a href="#/c/tvs">TVs &amp; Home Theater</a>
+            <a href="#/c/audio">Audio</a>
+            <a href="#/c/computers">Computers</a>
+            <a href="#/c/tablets">Tablets</a>
+            <a href="#/c/deals">Deals under $200</a>
+          </div>
+          <div>
+            <h2>Your stuff</h2>
+            <a href="#/cart">Cart</a>
+            <a href="#/orders">Orders</a>
+            <a href="#/checkout">Checkout</a>
+          </div>
+          <div>
+            <h2>BestBye</h2>
+            <p>Electronics from the Hobbs, NM warehouse. The card number stays in this browser.</p>
+          </div>
+        </div>
       </div>
-    </main>
+      <div class="foot-legal">
+        <a class="logo-tag logo-tag-small" href="#/">BestBye</a>
+        <p>© 2026 BestBye · Hobbs, NM</p>
+      </div>
+    </footer>
 
     <script src="./config.js"></script>
     <script src="./app.js"></script>

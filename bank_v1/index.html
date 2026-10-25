@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Merritt Bank — Fraud Desk</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <header class="bar">
+      <div class="brand">
+        <p class="bank">Merritt Bank</p>
+        <p class="desk">Fraud operations</p>
+      </div>
+      <div class="bar-actions">
+        <p class="live" id="live">Connecting</p>
+        <button type="button" id="reset">Reset demo</button>
+      </div>
+    </header>
+
+    <div class="shell">
+      <main>
+        <div class="main-head">
+          <h1>Open cases</h1>
+          <p id="count">Waiting for the live feed.</p>
+        </div>
+        <div id="cases" class="cases"></div>
+      </main>
+
+      <div class="rail">
+        <div id="chat"></div>
+        <aside class="sim" id="simulator">
+          <p class="kicker">Simulator</p>
+          <h2>Call controls</h2>
+          <p class="target" id="sim-target">No case yet.</p>
+          <div class="sim-buttons">
+            <button type="button" data-tool="transcript">Add transcript line</button>
+            <button type="button" data-tool="red-flag">Add red flag</button>
+            <button type="button" data-tool="approve">Approve</button>
+            <button type="button" class="danger" data-tool="escalate">Escalate</button>
+          </div>
+          <p class="sim-note" id="sim-status" role="status"></p>
+        </aside>
+      </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/convex@1.48.0/dist/browser.bundle.js"></script>
+    <script src="./config.js"></script>
+    <script src="./app.js"></script>
+  </body>
+</html>

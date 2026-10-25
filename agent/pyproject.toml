@@ -1,0 +1,13 @@
+[project]
+name = "ellio-agent"
+version = "0.1.0"
+description = "Ellio: voice fraud agent for seniors (Merritt Bank)"
+requires-python = ">=3.10"
+dependencies = [
+    "cartesia-line==0.2.19",
+    "loguru>=0.7.0",
+    "httpx>=0.27.0",
+]
+
+[tool.setuptools]
+py-modules = ["main"]

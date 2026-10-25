@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Merritt Bank fraud and risk</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <header class="globalbar">
+      <div class="logo">
+        <svg viewBox="0 0 32 32" aria-hidden="true"><path d="M4 26V8l12 8 12-8v18" fill="none" stroke="currentColor" stroke-width="3" stroke-linejoin="round" /></svg>
+        <span>Merritt Bank</span>
+      </div>
+      <nav class="globalnav" aria-label="Sections">
+        <a href="#" aria-disabled="true">Accounts</a>
+        <a href="#" aria-disabled="true">Payments</a>
+        <a href="#" aria-disabled="true">Cards</a>
+        <a href="#" class="is-current" aria-current="page">Fraud &amp; risk</a>
+        <a href="#" aria-disabled="true">Reports</a>
+      </nav>
+      <div class="global-right">
+        <span class="conn" id="conn">Connecting</span>
+        <div class="staff">
+          <span class="staff-avatar">RM</span>
+          <span class="staff-name">Risk manager</span>
+        </div>
+      </div>
+    </header>
+
+    <div class="shell">
+      <aside class="subnav" aria-label="Fraud and risk">
+        <p class="subnav-title">Fraud &amp; risk</p>
+        <button type="button" class="subnav-item" data-view="overview">Overview</button>
+        <button type="button" class="subnav-item" data-view="ellio">
+          <span>Ellio</span>
+          <span class="count" id="ellio-count" hidden>0</span>
+        </button>
+        <button type="button" class="subnav-item" aria-disabled="true">Disputes</button>
+        <button type="button" class="subnav-item" aria-disabled="true">Card controls</button>
+        <div class="subnav-foot">
+          <button type="button" class="link" id="toggle-controls" aria-expanded="false">Demo controls</button>
+          <button type="button" class="link" id="reset">Reset demo</button>
+        </div>
+      </aside>
+
+      <!-- Overview -->
+      <main class="view" id="view-overview" hidden>
+        <div class="page-head">
+          <h1>Fraud &amp; risk</h1>
+          <p>Card activity flagged in the last 24 hours.</p>
+        </div>
+        <div class="kpis" id="kpis"></div>
+        <section class="ellio-promo">
+          <div>
+            <h2>Ellio</h2>
+            <p>Calls the cardholder when a purchase looks unusual, confirms what happened, and freezes the card if it wasn't them.</p>
+          </div>
+          <button type="button" data-view="ellio">Open Ellio</button>
+        </section>
+        <section class="table-card">
+          <h2>Recent alerts</h2>
+          <table class="alerts">
+            <thead>
+              <tr><th>Case</th><th>Cardholder</th><th>Purchase</th><th>Amount</th><th>Status</th></tr>
+            </thead>
+            <tbody id="alerts"></tbody>
+          </table>
+          <p class="table-empty" id="alerts-empty">No alerts yet.</p>
+        </section>
+      </main>
+
+      <!-- Ellio -->
+      <main class="view view-ellio" id="view-ellio" hidden>
+        <div class="ellio-head">
+          <div class="ellio-id">
+            <span class="ellio-badge" aria-hidden="true">E</span>
+            <div>
+              <h1>Ellio</h1>
+              <p>Automated outreach for flagged card activity</p>
+            </div>
+          </div>
+          <p class="activity" id="activity" aria-live="polite" hidden></p>
+        </div>
+
+        <div class="ellio-body">
+          <nav class="inbox" aria-label="Case folders">
+            <p class="inbox-title">Case folders</p>
+            <ol id="inbox"></ol>
+            <p class="inbox-empty" id="inbox-empty">New cases land here.</p>
+          </nav>
+
+          <section class="desk" id="desk" aria-label="Case desk">
+            <div class="desk-empty" id="desk-empty">
+              <svg viewBox="0 0 64 48" aria-hidden="true"><path d="M4 10h20l5 6h31v28H4z" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linejoin="round" /></svg>
+              <p>No open cases</p>
+              <span>When a purchase is flagged, its folder opens here.</span>
+            </div>
+            <div class="folder-slot" id="folder-slot"></div>
+            <div class="critter mood-rest" id="cursor" aria-hidden="true">
+              <svg viewBox="0 0 64 72" class="critter-svg">
+                <g class="c-bob">
+                  <line class="c-stalk" x1="32" y1="14" x2="32" y2="4" />
+                  <circle class="c-bulb" cx="32" cy="4" r="4" />
+                  <path class="c-body" d="M32 12c15 0 25 11 25 27 0 15-10 27-25 27S7 54 7 39c0-16 10-27 25-27z" />
+                  <ellipse class="c-belly" cx="32" cy="50" rx="13" ry="9" />
+                  <ellipse class="c-cheek" cx="16" cy="44" rx="4" ry="2.5" />
+                  <ellipse class="c-cheek" cx="48" cy="44" rx="4" ry="2.5" />
+                  <g class="c-eyes">
+                    <ellipse class="c-eye" cx="24" cy="35" rx="4.2" ry="5.4" />
+                    <ellipse class="c-eye" cx="40" cy="35" rx="4.2" ry="5.4" />
+                    <circle class="c-glint" cx="25.6" cy="33" r="1.4" />
+                    <circle class="c-glint" cx="41.6" cy="33" r="1.4" />
+                  </g>
+                  <path class="c-mouth m-smile" d="M27 45q5 4.5 10 0" />
+                  <path class="c-mouth m-flat" d="M27.5 46h9" />
+                  <ellipse class="c-mouth m-o" cx="32" cy="46" rx="3" ry="3.4" />
+                  <g class="c-glasses">
+                    <circle cx="24" cy="35" r="7" />
+                    <circle cx="40" cy="35" r="7" />
+                    <path d="M31 35h2" />
+                  </g>
+                </g>
+              </svg>
+              <p class="critter-say" id="critter-say"></p>
+            </div>
+          </section>
+        </div>
+      </main>
+    </div>
+
+    <div class="toast" id="toast" role="status" hidden></div>
+
+    <aside class="controls" id="controls" hidden>
+      <h2>Demo controls</h2>
+      <p id="sim-target">No case yet.</p>
+      <div class="control-buttons">
+        <button type="button" data-tool="transcript">Add a call line</button>
+        <button type="button" data-tool="red-flag">Add a warning sign</button>
+        <button type="button" data-tool="approve">Approve</button>
+        <button type="button" class="danger" data-tool="escalate">Escalate</button>
+      </div>
+      <p class="control-status" id="sim-status" role="status"></p>
+    </aside>
+
+    <script src="https://cdn.jsdelivr.net/npm/convex@1.48.0/dist/browser.bundle.js"></script>
+    <script src="./config.js"></script>
+    <script src="./app.js"></script>
+  </body>
+</html>

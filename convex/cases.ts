@@ -21,10 +21,13 @@ const caseView = v.object({
   _id: v.id("cases"),
   status: caseStatus,
   riskReasons: v.array(v.string()),
+  riskScore: v.optional(v.number()),
   transcript: v.array(transcriptEntry),
   redFlags: v.array(redFlag),
   summary: v.union(v.string(), v.null()),
   actions: v.array(v.string()),
+  reason: v.optional(v.string()),
+  endedAt: v.optional(v.number()),
   updatedAt: v.number(),
   transaction: transactionView,
 });
@@ -32,6 +35,12 @@ const caseView = v.object({
 const ESCALATION_ACTIONS = [
   "Card frozen",
   "Dispute filed",
+  "Family notified",
+];
+
+const SCAM_ACTIONS = [
+  "Purchase paused",
+  "Gift cards not sent",
   "Family notified",
 ];
 
@@ -61,10 +70,13 @@ export const list = query({
         _id: caseDoc._id,
         status: caseDoc.status,
         riskReasons: caseDoc.riskReasons,
+        riskScore: caseDoc.riskScore,
         transcript: caseDoc.transcript,
         redFlags: caseDoc.redFlags,
         summary: caseDoc.summary,
         actions: caseDoc.actions,
+        reason: caseDoc.reason,
+        endedAt: caseDoc.endedAt,
         updatedAt: caseDoc.updatedAt,
         transaction: {
           _id: transaction._id,
@@ -112,6 +124,10 @@ export const reset = mutation({
       }
     }
 
+    const traffic = await ctx.db.query("traffic").first();
+    if (traffic) {
+      await ctx.db.patch("traffic", traffic._id, { scored: 0 });
+    }
     return { casesDeleted, transactionsDeleted };
   },
 });
@@ -120,6 +136,7 @@ export const open = internalMutation({
   args: {
     transactionId: v.id("transactions"),
     riskReasons: v.array(v.string()),
+    riskScore: v.optional(v.number()),
   },
   returns: v.id("cases"),
   handler: async (ctx, args) => {
@@ -127,6 +144,7 @@ export const open = internalMutation({
       transactionId: args.transactionId,
       status: "calling",
       riskReasons: args.riskReasons,
+      ...(args.riskScore !== undefined ? { riskScore: args.riskScore } : {}),
       transcript: [],
       redFlags: [],
       summary: null,
@@ -150,6 +168,7 @@ export const approve = internalMutation({
     const actions = [...existing.actions, `Approved: ${args.reason}`];
     await ctx.db.patch("cases", args.caseId, {
       status: "approved",
+      reason: args.reason,
       actions,
       updatedAt: Date.now(),
     });
@@ -169,9 +188,12 @@ export const escalate = internalMutation({
   }),
   handler: async (ctx, args) => {
     await requireCase(ctx, args.caseId);
-    const actions = [...ESCALATION_ACTIONS];
+    const actions = /^possible scam/i.test(args.reason)
+      ? [...SCAM_ACTIONS]
+      : [...ESCALATION_ACTIONS];
     await ctx.db.patch("cases", args.caseId, {
       status: "escalated",
+      reason: args.reason,
       actions,
       updatedAt: Date.now(),
     });
@@ -184,13 +206,19 @@ export const addRedFlag = internalMutation({
     caseId: v.id("cases"),
     flag: v.string(),
     quote: v.string(),
+    why: v.optional(v.string()),
   },
   returns: v.object({ redFlags: v.array(redFlag) }),
   handler: async (ctx, args) => {
     const existing = await requireCase(ctx, args.caseId);
     const redFlags = [
       ...existing.redFlags,
-      { flag: args.flag, quote: args.quote, at: Date.now() },
+      {
+        flag: args.flag,
+        quote: args.quote,
+        ...(args.why ? { why: args.why } : {}),
+        at: Date.now(),
+      },
     ];
     await ctx.db.patch("cases", args.caseId, {
       redFlags,
@@ -234,5 +262,30 @@ export const setSummary = internalMutation({
       updatedAt: Date.now(),
     });
     return null;
+  },
+});
+
+export const markEnded = internalMutation({
+  args: { caseId: v.id("cases") },
+  returns: v.null(),
+  handler: async (ctx, args) => {
+    await requireCase(ctx, args.caseId);
+    const now = Date.now();
+    await ctx.db.patch("cases", args.caseId, { endedAt: now, updatedAt: now });
+    return null;
+  },
+});
+
+// Returns true only the first time, so a case is never dialed twice.
+export const claimCall = internalMutation({
+  args: { caseId: v.id("cases") },
+  returns: v.boolean(),
+  handler: async (ctx, args) => {
+    const existing = await requireCase(ctx, args.caseId);
+    if (existing.callPlacedAt !== undefined) {
+      return false;
+    }
+    await ctx.db.patch("cases", args.caseId, { callPlacedAt: Date.now() });
+    return true;
   },
 });

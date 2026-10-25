@@ -8,6 +8,8 @@ const app = defineApp({
     AGENT_ID: v.optional(v.string()),
     GRANDMA_PHONE: v.optional(v.string()),
     WEBHOOK_SECRET: v.optional(v.string()),
+    CRS_USERNAME: v.optional(v.string()),
+    CRS_PASSWORD: v.optional(v.string()),
   },
 });
 

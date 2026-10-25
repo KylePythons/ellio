@@ -8,8 +8,12 @@
  * @module
  */
 
+import type * as calls from "../calls.js";
 import type * as cases from "../cases.js";
+import type * as crs from "../crs.js";
 import type * as http from "../http.js";
+import type * as risk from "../risk.js";
+import type * as traffic from "../traffic.js";
 import type * as transactions from "../transactions.js";
 
 import type {
@@ -19,8 +23,12 @@ import type {
 } from "convex/server";
 
 declare const fullApi: ApiFromModules<{
+  calls: typeof calls;
   cases: typeof cases;
+  crs: typeof crs;
   http: typeof http;
+  risk: typeof risk;
+  traffic: typeof traffic;
   transactions: typeof transactions;
 }>;
 

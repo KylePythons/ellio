@@ -3,49 +3,195 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Merritt Bank — Fraud Desk</title>
+    <title>Merritt Bank fraud and risk</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
-      href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Serif:wght@500;600&display=swap"
+      href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700&display=swap"
       rel="stylesheet"
     />
     <link rel="stylesheet" href="./styles.css" />
   </head>
   <body>
-    <header class="bar">
-      <div>
-        <p class="bank">Merritt Bank</p>
-        <p class="desk">Fraud desk</p>
+    <header class="globalbar">
+      <div class="logo">
+        <svg viewBox="0 0 32 32" aria-hidden="true"><path d="M4 26V8l12 8 12-8v18" fill="none" stroke="currentColor" stroke-width="3" stroke-linejoin="round" /></svg>
+        <span>Merritt Bank</span>
       </div>
-      <div class="bar-actions">
-        <p class="live" id="live">Connecting</p>
-        <button type="button" id="reset">Reset demo</button>
+      <nav class="globalnav" aria-label="Sections">
+        <a href="#" aria-disabled="true">Accounts</a>
+        <a href="#" aria-disabled="true">Payments</a>
+        <a href="#" aria-disabled="true">Cards</a>
+        <a href="#" class="is-current" aria-current="page">Fraud &amp; risk</a>
+        <a href="#" aria-disabled="true">Reports</a>
+      </nav>
+      <div class="global-right">
+        <span class="conn" id="conn">Connecting</span>
+        <div class="staff">
+          <span class="staff-avatar">RM</span>
+          <span class="staff-name">Risk manager</span>
+        </div>
       </div>
     </header>
 
-    <div class="shell">
-      <main>
-        <div class="main-head">
-          <h1>Cases</h1>
-          <p id="count">Waiting for the live feed.</p>
+    <div class="shell is-nav-collapsed">
+      <aside class="subnav" aria-label="Fraud and risk">
+        <div class="panel-bar">
+          <p class="subnav-title" id="subnav-label">Fraud &amp; risk</p>
+          <button type="button" class="panel-toggle" id="toggle-nav" aria-expanded="false" aria-controls="subnav-body">
+            <span class="chev" aria-hidden="true"></span>
+            <span class="panel-toggle-name">Sections</span>
+          </button>
         </div>
-        <div id="cases" class="cases"></div>
+        <div class="subnav-body" id="subnav-body">
+          <button type="button" class="subnav-item" data-view="overview">Overview</button>
+          <button type="button" class="subnav-item" data-view="ellio">
+            <span>Ellio</span>
+            <span class="count" id="ellio-count" hidden>0</span>
+          </button>
+          <button type="button" class="subnav-item" aria-disabled="true">Disputes</button>
+          <button type="button" class="subnav-item" aria-disabled="true">Card controls</button>
+          <div class="subnav-foot">
+            <button type="button" class="link" id="toggle-controls" aria-expanded="false">Demo controls</button>
+            <button type="button" class="link" id="reset">Reset demo</button>
+          </div>
+        </div>
+      </aside>
+
+      <!-- Overview -->
+      <main class="view" id="view-overview" hidden>
+        <div class="page-head">
+          <h1>Live card activity</h1>
+          <p>Ellio scores every purchase the moment it happens.</p>
+        </div>
+        <section class="feed-card">
+          <div class="watcher" id="watcher">
+            <svg class="watcher-critter" viewBox="0 0 150 190" aria-hidden="true">
+              <circle class="e-blue" cx="56" cy="168" r="11" /><circle class="e-blue" cx="94" cy="168" r="11" />
+              <rect class="e-blue" x="25" y="40" width="100" height="118" rx="28" />
+              <rect class="w-eye" x="50" y="70" width="16" height="26" rx="6" />
+              <rect class="w-eye" x="84" y="70" width="16" height="26" rx="6" />
+              <g class="e-tie"><path d="M67 113h16l-4 9h-8z" /><path d="M72.5 124h5l5.5 21-8 7-8-7z" /></g>
+              <circle class="e-blue" cx="14" cy="112" r="11" /><circle class="e-blue" cx="136" cy="112" r="11" />
+            </svg>
+            <div class="watch-text">
+              <strong id="watch-line">Ellio is watching card activity</strong>
+              <span id="watch-count">Scored 0 purchases</span>
+            </div>
+            <span class="watch-legend"><i class="low"></i>Normal <i class="mid"></i>Watch <i class="high"></i>Ellio calls (60+)</span>
+          </div>
+          <table class="feed">
+            <thead>
+              <tr><th>Time</th><th>Cardholder</th><th>Purchase</th><th>Where</th><th class="num">Amount</th><th>Risk</th></tr>
+            </thead>
+            <tbody id="feed"></tbody>
+          </table>
+        </section>
+        <div class="kpis" id="kpis"></div>
+        <section class="ellio-promo">
+          <div>
+            <h2>Ellio</h2>
+            <p>Calls the cardholder when a purchase looks unusual, confirms what happened, and freezes the card if it wasn't them.</p>
+          </div>
+          <button type="button" data-view="ellio">Open Ellio</button>
+        </section>
+        <section class="table-card">
+          <h2>Recent alerts</h2>
+          <table class="alerts">
+            <thead>
+              <tr><th>Case</th><th>Cardholder</th><th>Purchase</th><th>Amount</th><th>Status</th></tr>
+            </thead>
+            <tbody id="alerts"></tbody>
+          </table>
+          <p class="table-empty" id="alerts-empty">No alerts yet.</p>
+        </section>
       </main>
 
-      <aside class="sim" id="simulator">
-        <p class="kicker">Debug</p>
-        <h2>Simulate call result</h2>
-        <p class="target" id="sim-target">No case yet.</p>
-        <div class="sim-buttons">
-          <button type="button" data-tool="transcript">Add transcript line</button>
-          <button type="button" data-tool="red-flag">Add red flag</button>
-          <button type="button" data-tool="approve">Approve</button>
-          <button type="button" class="danger" data-tool="escalate">Escalate</button>
+      <!-- Ellio -->
+      <main class="view view-ellio" id="view-ellio" hidden>
+        <div class="ellio-head">
+          <div class="ellio-id">
+            <span class="ellio-badge" aria-hidden="true">E</span>
+            <div>
+              <h1>Ellio</h1>
+              <p>Automated outreach for flagged card activity</p>
+            </div>
+          </div>
+          <p class="activity" id="activity" aria-live="polite" hidden></p>
         </div>
-        <p class="sim-note" id="sim-status" role="status"></p>
-      </aside>
+
+        <div class="ellio-body is-cases-collapsed">
+          <nav class="inbox" aria-label="Cases">
+            <div class="panel-bar">
+              <p class="inbox-title" id="inbox-label">Cases</p>
+              <button type="button" class="panel-toggle" id="toggle-cases" aria-expanded="false" aria-controls="inbox-body">
+                <span class="chev" aria-hidden="true"></span>
+                <span class="panel-toggle-name">Cases</span>
+              </button>
+            </div>
+            <div class="inbox-body" id="inbox-body">
+              <ol id="inbox"></ol>
+              <p class="inbox-empty" id="inbox-empty">New cases land here.</p>
+            </div>
+          </nav>
+
+          <section class="desk" id="desk" aria-label="Case desk">
+            <div class="desk-empty" id="desk-empty">
+              <svg viewBox="0 0 64 48" aria-hidden="true"><path d="M4 10h20l5 6h31v28H4z" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linejoin="round" /></svg>
+              <p>Watching card activity</p>
+              <span>No flagged purchases right now.</span>
+            </div>
+            <div class="folder-slot" id="folder-slot"></div>
+            <div class="critter mood-rest" id="cursor" aria-hidden="true">
+              <svg viewBox="0 0 150 190" class="critter-svg">
+                <ellipse class="e-shadow" cx="75" cy="182" rx="44" ry="6" />
+                <g class="e-all">
+                  <circle class="e-blue e-fl" cx="56" cy="168" r="11" />
+                  <circle class="e-blue e-fr" cx="94" cy="168" r="11" />
+                  <g class="e-upper">
+                    <rect class="e-blue" x="25" y="40" width="100" height="118" rx="28" />
+                    <rect class="e-eye" x="50" y="70" width="16" height="26" rx="6" />
+                    <rect class="e-eye" x="84" y="70" width="16" height="26" rx="6" />
+                    <g class="e-tie">
+                      <path d="M67 113h16l-4 9h-8z" />
+                      <path d="M72.5 124h5l5.5 21-8 7-8-7z" />
+                    </g>
+                    <circle class="e-blue e-hl" cx="14" cy="112" r="11" />
+                    <circle class="e-blue e-hr" cx="136" cy="112" r="11" />
+                  </g>
+                </g>
+              </svg>
+              <p class="critter-say" id="critter-say"></p>
+            </div>
+          </section>
+        </div>
+      </main>
     </div>
+
+    <div class="toast" id="toast" role="status" hidden></div>
+
+    <aside class="controls" id="controls" hidden>
+      <h2>Demo controls</h2>
+      <p id="sim-target">No case yet.</p>
+      <div class="fuse">
+        <label>Delay
+          <select id="fuse-delay">
+            <option value="10">10 seconds</option>
+            <option value="60">1 minute</option>
+            <option value="600">10 minutes</option>
+          </select>
+        </label>
+        <button type="button" id="fuse-buy">Queue $1,500 gift card purchase</button>
+        <p class="control-status" id="fuse-status" role="status"></p>
+      </div>
+      <div class="control-buttons">
+        <button type="button" data-tool="transcript">Add a call line</button>
+        <button type="button" data-tool="red-flag">Add a warning sign</button>
+        <button type="button" data-tool="approve">Approve</button>
+        <button type="button" class="danger" data-tool="escalate">Escalate</button>
+      </div>
+      <p class="control-status" id="sim-status" role="status"></p>
+    </aside>
 
     <script src="https://cdn.jsdelivr.net/npm/convex@1.48.0/dist/browser.bundle.js"></script>
     <script src="./config.js"></script>

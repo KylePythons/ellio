@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Merritt Bank fraud desk</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <header class="topbar">
+      <div class="brand">
+        <svg class="mark" viewBox="0 0 32 32" aria-hidden="true">
+          <path d="M4 26V8l12 8 12-8v18" fill="none" stroke="currentColor" stroke-width="3" stroke-linejoin="round" />
+        </svg>
+        <div>
+          <p class="bank">Merritt Bank</p>
+          <p class="desk">Fraud desk</p>
+        </div>
+      </div>
+
+      <div class="narrator" aria-live="polite">
+        <span class="ellio-dot" id="ellio-dot"></span>
+        <p id="narration">Ellio is waiting for a flagged purchase.</p>
+      </div>
+
+      <div class="top-actions">
+        <p class="conn" id="conn">Connecting</p>
+        <button type="button" class="ghost" id="toggle-controls" aria-expanded="false">Demo controls</button>
+        <button type="button" class="ghost" id="reset">Reset demo</button>
+      </div>
+    </header>
+
+    <div class="layout">
+      <aside class="queue" aria-label="Cases">
+        <h2>Cases</h2>
+        <ol id="queue" class="queue-list"></ol>
+        <p class="queue-empty" id="queue-empty">No cases yet. Buy the TV on BestBye from outside Hobbs, NM.</p>
+      </aside>
+
+      <main class="desktop" id="desktop" aria-label="Ellio's workspace">
+        <div class="wallpaper" aria-hidden="true">
+          <p>Ellio</p>
+          <span>Fraud protection that calls</span>
+        </div>
+        <div class="windows" id="windows"></div>
+        <div class="cursor" id="cursor" aria-hidden="true">
+          <svg viewBox="0 0 24 24"><path d="M4 2l15 9.5-6.6 1.4L9.6 20z" /></svg>
+          <span>Ellio</span>
+        </div>
+      </main>
+    </div>
+
+    <aside class="controls" id="controls" hidden>
+      <h2>Demo controls</h2>
+      <p id="sim-target">No case yet.</p>
+      <div class="control-buttons">
+        <button type="button" data-tool="transcript">Add a transcript line</button>
+        <button type="button" data-tool="red-flag">Add a warning sign</button>
+        <button type="button" data-tool="approve">Approve</button>
+        <button type="button" class="danger" data-tool="escalate">Escalate</button>
+      </div>
+      <p class="control-status" id="sim-status" role="status"></p>
+    </aside>
+
+    <script src="https://cdn.jsdelivr.net/npm/convex@1.48.0/dist/browser.bundle.js"></script>
+    <script src="./config.js"></script>
+    <script src="./app.js"></script>
+  </body>
+</html>
