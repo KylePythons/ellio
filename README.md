@@ -1,5 +1,7 @@
 # Ellio
 
+**▶ [Watch the 2-minute demo](https://youtu.be/8RfVdj1htYs)** · Built at Cal Hacks 13.0
+
 A hackathon demo. BestBye is a small electronics shop. A risky checkout opens a fraud case at Merritt Bank, which can place a Cartesia verification call and shows the case live.
 
 Ellio is built for cardholders like Dolores, a 78-year-old retiree, who are often the target of card scams. It judges each purchase against her own normal life, checks who is really on the other end of the order, and calls her in a natural voice before the money moves.
