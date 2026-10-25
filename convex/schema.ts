@@ -41,6 +41,14 @@ export default defineSchema({
     accountId: v.string(),
     merchants: v.record(v.string(), v.string()),
   }),
+  nessieAccounts: defineTable({
+    key: v.string(),
+    name: v.string(),
+    home: v.string(),
+    customerId: v.string(),
+    accountId: v.string(),
+    merchants: v.record(v.string(), v.string()),
+  }).index("by_key", ["key"]),
   cases: defineTable({
     transactionId: v.id("transactions"),
     status: caseStatus,

@@ -49,6 +49,8 @@
             <span>Ellio</span>
             <span class="count" id="ellio-count" hidden>0</span>
           </button>
+          <button type="button" class="subnav-item" data-view="accounts">Accounts</button>
+          <button type="button" class="subnav-item" data-view="riskcheck">Risk check</button>
           <button type="button" class="subnav-item" aria-disabled="true">Disputes</button>
           <button type="button" class="subnav-item" aria-disabled="true">Card controls</button>
           <div class="subnav-foot">
@@ -105,6 +107,43 @@
           </table>
           <p class="table-empty" id="alerts-empty">No alerts yet.</p>
         </section>
+      </main>
+
+      <!-- Accounts (Capital One Nessie) -->
+      <main class="view view-page" id="view-accounts" hidden>
+        <div class="page-head page-head-row">
+          <div>
+            <h1>Cardholder accounts</h1>
+            <p>Live from the Capital One Nessie API. Ellio learns each cardholder's normal spending from this history.</p>
+          </div>
+          <span class="src-badge">Capital One · Nessie</span>
+        </div>
+        <p class="page-status" id="accounts-status">Loading accounts…</p>
+        <section class="table-card acct-card-wrap">
+          <table class="acct-list">
+            <thead>
+              <tr><th>Cardholder</th><th>Home</th><th>Nessie account</th><th class="num">Purchases</th><th class="num">Median</th><th class="num">Total</th><th>Usual categories</th></tr>
+            </thead>
+            <tbody id="accounts"></tbody>
+          </table>
+        </section>
+      </main>
+
+      <!-- Risk check (CRS FraudFinder) -->
+      <main class="view view-page" id="view-riskcheck" hidden>
+        <div class="page-head page-head-row">
+          <h1>Contact risk check</h1>
+          <span class="src-badge crs">CRS · FraudFinder</span>
+        </div>
+        <div class="rc-layout">
+          <section class="table-card rc-input">
+            <h2>Buyer contact</h2>
+            <select id="rc-persona" aria-label="CRS test persona"></select>
+            <dl class="rc-fields" id="rc-fields"></dl>
+            <button type="button" id="rc-run">Run check</button>
+          </section>
+          <section class="table-card rc-result" id="rc-result"></section>
+        </div>
       </main>
 
       <!-- Ellio -->

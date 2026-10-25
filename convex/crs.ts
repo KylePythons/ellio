@@ -13,6 +13,7 @@ export type CrsResult = {
   ok: boolean;
   score: number | null; // 0 low risk – 100 very high risk
   signals: string[]; // short human-readable findings
+  details?: Record<string, string>;
   error?: string;
 };
 
@@ -133,7 +134,16 @@ export async function fraudFinder(args: {
     if (ev.status === "invalid") signals.push("email address fails validation");
     if (typeof phone.line_type === "string" && /voip/i.test(phone.line_type)) signals.push("VoIP phone line");
 
-    return { ok: true, score, signals };
+    const postal = asRecord(risk.postal);
+    if (typeof postal.ip_postal_distance === "string" && postal.ip_postal_distance.includes(">")) signals.push(`IP ${postal.ip_postal_distance.replace(/>\s*1000/, "over 1,000")} from address`);
+    const details: Record<string, string> = {};
+    if (firstSeen) details["Email first seen"] = firstSeen;
+    if (typeof ev.status === "string") details["Email validation"] = ev.status;
+    if (typeof phone.line_type === "string") details["Phone line"] = `${phone.line_type}${phone.prepaid === true ? " · prepaid" : ""}`;
+    if (Object.keys(owner).length) details["Phone owner"] = ownerMatch ? "no match" : "match";
+    if (typeof postal.ip_postal_distance === "string") details["IP to address"] = postal.ip_postal_distance;
+    if (typeof postal.deliverability === "string") details["Address"] = postal.deliverability;
+    return { ok: true, score, signals, details };
   } catch (error) {
     return { ok: false, score: null, signals: [], error: error instanceof Error ? error.message : String(error) };
   }

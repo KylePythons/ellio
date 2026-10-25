@@ -7,7 +7,7 @@ const convexUrl = window.CONVEX_URL;
 const siteUrl = (window.CONVEX_SITE_URL || "").replace(/\/$/, "");
 const $ = (id) => document.getElementById(id);
 
-const views = { overview: $("view-overview"), ellio: $("view-ellio") };
+const views = { overview: $("view-overview"), ellio: $("view-ellio"), accounts: $("view-accounts"), riskcheck: $("view-riskcheck") };
 const deskEl = $("desk");
 const slotEl = $("folder-slot");
 const cursorEl = $("cursor");
@@ -149,6 +149,9 @@ bindPanel($("toggle-cases"), "is-cases-collapsed", document.querySelector(".elli
 
 function showView(name) {
   currentView = name;
+  if (window.__walker) window.__walker.hide();
+  if (name === "accounts") loadAccounts();
+  if (name === "riskcheck" && typeof rcEllioRun === "function") setTimeout(rcEllioRun, 350);
   for (const [k, node] of Object.entries(views)) node.hidden = k !== name;
   for (const b of document.querySelectorAll(".subnav-item[data-view]")) {
     b.classList.toggle("is-current", b.dataset.view === name);
@@ -947,3 +950,252 @@ function renderFeed(data) {
 update();
 // Re-check every 15s so a hung-up call stops showing as live.
 setInterval(() => { if (cases.length) update(); }, 15000);
+
+
+
+// ---------- Ellio walker (Accounts + Risk check animations) ----------
+const REDUCED = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+const walker = (() => {
+  const node = el("div", "walker");
+  node.setAttribute("aria-hidden", "true");
+  node.innerHTML = '<svg viewBox="0 0 150 190"><ellipse cx="75" cy="182" rx="44" ry="6" fill="rgba(0,0,0,.18)"/><g class="w-body"><circle cx="56" cy="168" r="11" fill="#3e6fe0"/><circle cx="94" cy="168" r="11" fill="#3e6fe0"/><rect x="25" y="40" width="100" height="118" rx="28" fill="#3e6fe0"/><rect x="50" y="70" width="16" height="26" rx="6" fill="#0d1512"/><rect x="84" y="70" width="16" height="26" rx="6" fill="#0d1512"/><path d="M67 113h16l-4 9h-8z" fill="#0d1512"/><path d="M72.5 124h5l5.5 21-8 7-8-7z" fill="#0d1512"/><circle cx="14" cy="112" r="11" fill="#3e6fe0"/><circle cx="136" cy="112" r="11" fill="#3e6fe0"/></g></svg>';
+  document.body.append(node);
+  let shown = false;
+  const place = (x, y, ms) => {
+    node.style.transitionDuration = REDUCED ? "0ms" : `${ms}ms`;
+    node.style.transform = `translate(${Math.round(x)}px, ${Math.round(y)}px)`;
+  };
+  return {
+    async to(target, { dx = 0, dy = 0, ms = 650, side = "left" } = {}) {
+      const r = target.getBoundingClientRect();
+      const w = 46, h = 58;
+      const x = side === "left" ? r.left - w - 10 + dx : side === "right" ? r.right + 10 + dx : r.left + r.width / 2 - w / 2 + dx;
+      const y = side === "above" ? r.top - h + 6 + dy : r.top + r.height / 2 - h / 2 + dy;
+      if (!shown) {
+        place(x, y + 30, 0);
+        node.classList.add("is-on");
+        shown = true;
+        await sleep(30);
+      }
+      node.classList.add("is-walking");
+      place(x, y, ms);
+      await sleep(REDUCED ? 0 : ms);
+      node.classList.remove("is-walking");
+    },
+    async press() {
+      node.classList.add("is-press");
+      await sleep(REDUCED ? 0 : 180);
+      node.classList.remove("is-press");
+    },
+    hide() {
+      node.classList.remove("is-on");
+      shown = false;
+    },
+  };
+})();
+window.__walker = walker;
+
+// ---------- Accounts (Capital One Nessie) ----------
+let accountsLoading = false;
+async function loadAccounts() {
+  if (!client || accountsLoading) return;
+  accountsLoading = true;
+  const status = $("accounts-status");
+  status.hidden = false;
+  status.textContent = "Loading accounts from Nessie…";
+  try {
+    const rows = await client.action(convex.anyApi.nessie.accounts, {});
+    renderAccounts(rows);
+    status.hidden = rows.length > 0;
+    scanAccounts();
+    if (!rows.length) status.textContent = "No Nessie accounts yet. Run npx convex run nessie:seed.";
+  } catch (err) {
+    status.textContent = `Could not reach Nessie: ${err.message}`;
+  } finally {
+    accountsLoading = false;
+  }
+}
+
+let openAccount = null;
+let scanRun = 0;
+async function scanAccounts() {
+  const run = ++scanRun;
+  const rowsEls = [...document.querySelectorAll("#accounts .acct-row")];
+  rowsEls.forEach((r, i) => { r.style.animationDelay = `${Math.min(i, 20) * 35}ms`; r.classList.add("is-enter"); });
+  if (REDUCED || !rowsEls.length) return;
+  await sleep(rowsEls.length * 35 + 250);
+  for (const r of rowsEls) {
+    if (run !== scanRun || currentView !== "accounts") return;
+    await walker.to(r.querySelector(".acct-name"), { ms: 150, dx: 4 });
+    r.classList.add("is-scan");
+    setTimeout(() => r.classList.remove("is-scan"), 260);
+  }
+  const focus = rowsEls.find((r) => r.classList.contains("is-focus")) || rowsEls[0];
+  if (run !== scanRun || currentView !== "accounts") return;
+  await walker.to(focus.querySelector(".acct-name"), { ms: 600, dx: 4 });
+  await walker.press();
+  if (!focus.classList.contains("is-open")) focus.click();
+}
+function renderAccounts(rows) {
+  const body = $("accounts");
+  body.replaceChildren();
+  const short = (d) => new Date(d + "T12:00:00").toLocaleDateString("en-US", { month: "short", day: "numeric" });
+  for (const a of rows) {
+    const tr = el("tr", "acct-row" + (isDolores(a.name) ? " is-focus" : "") + (openAccount === a.accountId ? " is-open" : ""));
+    const name = el("td", "acct-name");
+    name.append(el("span", "acct-caret", "›"), document.createTextNode(a.name));
+    const catText = a.categories.join(", ");
+    const cats = el("td", "muted", catText.charAt(0).toUpperCase() + catText.slice(1));
+    tr.append(
+      name,
+      el("td", "muted", a.home),
+      el("td", null, ""),
+      el("td", "num", String(a.count)),
+      el("td", "num", money(a.median)),
+      el("td", "num", money(a.total)),
+      cats,
+    );
+    tr.children[2].className = "muted acct-id-plain";
+    tr.children[2].textContent = String(a.accountId).slice(0, 8);
+    body.append(tr);
+
+    const detail = el("tr", "acct-detail");
+    detail.hidden = openAccount !== a.accountId;
+    const td = el("td");
+    td.colSpan = 7;
+    if (a.error) td.append(el("p", "acct-err", a.error));
+    const inner = el("table", "acct-table");
+    for (const p of a.recent) {
+      const r = el("tr");
+      r.append(el("td", "t", short(p.date)), el("td", null, p.merchant), el("td", "muted", p.description), el("td", "num", money(p.amount)));
+      inner.append(r);
+    }
+    td.append(el("p", "acct-detail-title", `Recent purchases · ${a.recent.length} of ${a.count}`), inner);
+    detail.append(td);
+    body.append(detail);
+
+    tr.addEventListener("click", () => {
+      const open = detail.hidden;
+      for (const d of body.querySelectorAll(".acct-detail")) d.hidden = true;
+      for (const r of body.querySelectorAll(".acct-row")) r.classList.remove("is-open");
+      detail.hidden = !open;
+      tr.classList.toggle("is-open", open);
+      openAccount = open ? a.accountId : null;
+    });
+  }
+}
+
+// ---------- Risk check (CRS FraudFinder) ----------
+const RC_PERSONAS = {
+  P13: { label: "Kayla Brennan", name: "Kayla Brennan", email: "kb.9921x@example.com", phone: "(555) 010-1013", address: "9021 Kingston Pike, Knoxville, TN 37923", ip: "198.51.100.13" },
+  P12: { label: "Victor Anand", name: "Victor Anand", email: "v.anand.1968@example.com", phone: "(555) 010-1012", address: "55 Water St Fl 20, New York, NY 10041", ip: "198.51.100.12" },
+  P20: { label: "Dolores Whitcomb", name: "Dolores Whitcomb", email: "dolores.whitcomb@example.com", phone: "(555) 010-1020", address: "612 Ocean View Dr, Santa Barbara, CA 93109", ip: "203.0.113.30" },
+  P01: { label: "Margaret Okafor", name: "Margaret Okafor", email: "margaret.okafor@example.com", phone: "(555) 010-1001", address: "1420 Willow Creek Dr, San Jose, CA 95125", ip: "203.0.113.11" },
+};
+const RC_R = 70;
+const RC_C = 2 * Math.PI * RC_R;
+function rcRing(score, level) {
+  const NS = "http://www.w3.org/2000/svg";
+  const wrap = el("div", `rc-ring lvl-${level || "none"}`);
+  const svg = document.createElementNS(NS, "svg");
+  svg.setAttribute("viewBox", "0 0 180 180");
+  const track = document.createElementNS(NS, "circle");
+  const bar = document.createElementNS(NS, "circle");
+  for (const c of [track, bar]) {
+    c.setAttribute("cx", "90"); c.setAttribute("cy", "90"); c.setAttribute("r", String(RC_R));
+  }
+  track.setAttribute("class", "rc-track");
+  bar.setAttribute("class", "rc-bar");
+  bar.style.strokeDasharray = String(RC_C);
+  bar.style.strokeDashoffset = String(RC_C);
+  svg.append(track, bar);
+  const mid = el("div", "rc-mid");
+  mid.append(el("strong", null, score == null ? "–" : String(score)), el("span", null, level || "risk"));
+  wrap.append(svg, mid);
+  if (score != null) requestAnimationFrame(() => requestAnimationFrame(() => {
+    bar.style.strokeDashoffset = String(RC_C * (1 - Math.max(0, Math.min(100, score)) / 100));
+  }));
+  return wrap;
+}
+function rcIdle(text) {
+  const out = $("rc-result");
+  out.replaceChildren(rcRing(null, null));
+  if (text) out.append(el("p", "rc-idle", text));
+}
+
+const rcSelect = $("rc-persona");
+for (const [id, p] of Object.entries(RC_PERSONAS)) {
+  const o = el("option", null, `${id} · ${p.label}`);
+  o.value = id;
+  rcSelect.append(o);
+}
+function rcShowFields() {
+  const p = RC_PERSONAS[rcSelect.value];
+  const dl = $("rc-fields");
+  dl.replaceChildren();
+  for (const [k, v] of [["Email", p.email], ["Phone", p.phone], ["Address", p.address], ["IP", p.ip]]) {
+    dl.append(el("dt", null, k), el("dd", null, v));
+  }
+  rcIdle();
+}
+rcSelect.addEventListener("change", rcShowFields);
+rcShowFields();
+
+let rcBusy = false;
+async function rcEllioRun() {
+  if (rcBusy) return;
+  const btn = $("rc-run");
+  await walker.to(btn, { side: "left", ms: 700 });
+  await walker.press();
+  btn.classList.add("is-pressed");
+  setTimeout(() => btn.classList.remove("is-pressed"), 160);
+  rcRunCheck();
+}
+rcSelect.addEventListener("change", () => { if (currentView === "riskcheck") rcEllioRun(); });
+$("rc-run").addEventListener("click", rcRunCheck);
+async function rcRunCheck() {
+  if (!client || rcBusy) return;
+  rcBusy = true;
+  const btn = $("rc-run");
+  btn.disabled = true;
+  btn.textContent = "Checking…";
+  rcIdle("Checking with CRS…");
+  try {
+    const r = await client.action(convex.anyApi.crsCheck.check, { persona: rcSelect.value });
+    const out = $("rc-result");
+    if (!r.ok || r.score == null) {
+      rcIdle(r.error || "CRS returned no score.");
+      return;
+    }
+    const level = r.score >= 70 ? "high" : r.score >= 40 ? "medium" : "low";
+    const ring = rcRing(r.score, level);
+    out.replaceChildren(ring);
+    // count the number up with the ring
+    const num = ring.querySelector("strong");
+    const t0 = performance.now(), dur = REDUCED ? 0 : 1000;
+    const tick = (t) => {
+      const k = dur ? Math.min(1, (t - t0) / dur) : 1;
+      num.textContent = String(Math.round(r.score * (1 - Math.pow(1 - k, 3))));
+      if (k < 1) requestAnimationFrame(tick);
+    };
+    requestAnimationFrame(tick);
+    if (!REDUCED) await sleep(900);
+    if (r.signals.length) {
+      const ul = el("ul", "rc-signals");
+      r.signals.forEach((sgl, i) => {
+        const li = el("li", "rc-in", sgl.charAt(0).toUpperCase() + sgl.slice(1));
+        li.style.animationDelay = `${i * 140}ms`;
+        ul.append(li);
+      });
+      out.append(ul);
+    } else {
+      out.append(el("p", "rc-clean rc-in", "No warning signs"));
+    }
+  } catch (err) {
+    rcIdle(err.message);
+  } finally {
+    btn.disabled = false;
+    btn.textContent = "Run check";
+    rcBusy = false;
+  }
+}

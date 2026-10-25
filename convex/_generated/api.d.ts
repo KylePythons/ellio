@@ -11,6 +11,7 @@
 import type * as calls from "../calls.js";
 import type * as cases from "../cases.js";
 import type * as crs from "../crs.js";
+import type * as crsCheck from "../crsCheck.js";
 import type * as http from "../http.js";
 import type * as nessie from "../nessie.js";
 import type * as risk from "../risk.js";
@@ -27,6 +28,7 @@ declare const fullApi: ApiFromModules<{
   calls: typeof calls;
   cases: typeof cases;
   crs: typeof crs;
+  crsCheck: typeof crsCheck;
   http: typeof http;
   nessie: typeof nessie;
   risk: typeof risk;
